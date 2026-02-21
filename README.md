@@ -1,61 +1,208 @@
-Forked from Bitcoin reference wallet 0.8.5, BlakeCoin, and Photon
+<p align="center">
+  <img src="src/qt/res/icons/bitcoin.png" alt="Electron" width="95">
+</p>
 
-Electron is a cryptocurrency designed to use the Blake 256 algorithm cloned from BlakeCoin.
+## About Electron
 
-What is Blake?
+Electron is designed for faster transactions. The block reward steps down over time rather than halving, settling at a permanent rate with no further reduction. A cap is in place to reduce difficulty jumps upwards.
 
-Blake-256(optimized) faster than scrypt and faster than sha256 in C (asm is still faster for sha256d)
+- Uses the **Blake-256** hashing algorithm — a SHA-3 candidate faster than Scrypt, SHA-256D, Keccak, and Groestl
+- Forked from **Bitcoin 0.8.5**
+- Optimized 8-round Blake-256 with reduced double-hashing for efficiency
+- Maintains proven ECDSA security
 
-The algorithm was written as a candidate for sha3, Based on round one candidate code from the sphlib 2.1 and reduced the compression function to 8.
+| Network Info | |
+|---|---|
+| Algorithm | Blake-256 (8 rounds) |
+| Block time | 1 minute |
+| Block reward | 20 ELT (year 1), 10 ELT (year 2), then 5 ELT permanently |
+| Difficulty retarget | Every 30 blocks |
+| Block maturity | 480 confirmations |
+| Default port | 6853 |
+| RPC port | 6852 |
+| Max supply | 7,000,000,000 ELT |
 
-Tweaks Removed some of the double hashing from the wallet as it is wasteful on compute, No changes to the ecdsa public/private function as that has proven to be secure so far on bitcoin.
+---
+
+## Quick Start (Ubuntu 18.04)
+
+```bash
+git clone https://github.com/SidGrip/Electron-ELT.git
+cd Electron-ELT
+sudo apt install build-essential libssl-dev libboost-all-dev \
+  libdb4.8-dev libdb4.8++-dev libminiupnpc-dev \
+  qt5-qmake qtbase5-dev qttools5-dev-tools
+./build.sh --native --both
+```
+
+- Builds both the daemon (`electrond`) and Qt wallet (`electron-qt`) natively on Ubuntu 18.04
+- Binaries go to `outputs/native/`
+- On Linux, Qt builds automatically install a `.desktop` launcher and icon so the wallet appears in Activities search
+- For other Ubuntu versions, use Docker or AppImage
+- See below for macOS, Windows, and other build options
+
+## Build Options
+
+```
+./build.sh [PLATFORM] [TARGET] [OPTIONS]
+
+Platforms:
+  --native          Build on this machine (Linux/Ubuntu 18.04, macOS, or Windows)
+  --appimage        Portable Linux AppImage (requires Docker)
+  --windows         Cross-compile for Windows from Linux (requires Docker)
+  --macos           Cross-compile for macOS from Linux (requires Docker)
+
+Targets:
+  --daemon          Daemon only (electrond)
+  --qt              Qt wallet only (electron-qt)
+  --both            Both (default)
+
+Docker options (for --appimage, --windows, --macos, or --native on Linux):
+  --pull-docker     Pull prebuilt Docker images from Docker Hub
+  --build-docker    Build Docker images locally from repo Dockerfiles
+
+Other options:
+  --jobs N          Parallel make jobs (default: CPU cores - 1)
+```
+
+## Platform Build Instructions
+
+### Linux (Docker)
+
+Use `--pull-docker` to pull prebuilt images from Docker Hub, or `--build-docker` to build them locally from the Dockerfiles in `docker/`.
+
+```bash
+./build.sh --native --both --pull-docker      # Daemon + Qt (pull from Hub)
+./build.sh --native --qt --pull-docker        # Qt wallet only
+./build.sh --native --daemon --pull-docker    # Daemon only
+./build.sh --native --both --build-docker     # Build Docker image locally first
+./build.sh --appimage --pull-docker           # Portable AppImage
+./build.sh --appimage --build-docker          # AppImage (build image locally)
+```
 
 
-What is Blakecoin?
+### Windows
 
-Blakecoin is an experimental new digital currency that enables instant payments to
-anyone, anywhere in the world. Blakecoin uses peer-to-peer technology to operate
-with no central authority: managing transactions and issuing of coins are carried
-out collectively by the network.
+There are two ways to build for Windows:
 
-What is Photon ?
+**Native (MSYS2/MinGW64)** — builds on Windows directly. Produces a ~10MB exe with DLLs bundled alongside it in the output folder.
 
-A clone of Blakecoin with a few changes.
-The standard block award of Photon is 32,768 BUT as the block chain grows the award will increase.
-The amount it increases is directly related to the current difficulty and height of the blockchain.
-Miners will get 32,768 coins plus the square root of blockchain height multiplied by the current difficulty.
-Still as Photon's are plentiful in the universe the max money is set to 90,000,000,000
-That is 90 Billion Photons. Difficulty retargets every 20 blocks with a target of a new block to be produced every 3 minutes.
-Up to block 3500 the max adjustment is 15% up each retarget.
-After block 3500 the max adjustment is 3% up each retarget.  
+Install [MSYS2](https://www.msys2.org), then from the MINGW64 shell:
 
+```bash
+pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-boost \
+  mingw-w64-x86_64-openssl mingw-w64-x86_64-qt5-base \
+  mingw-w64-x86_64-qt5-tools mingw-w64-x86_64-miniupnpc \
+  mingw-w64-x86_64-db
+```
 
-What is Electron?
+Then build:
 
-Goal of the coin is to allow faster transactions.  
-Block reward is 20 coins per block for the first 525,600 blocks (~1 year),
-After that 10 coins per block for the second year then after 5 coins per block
-with no further reduction of block reward.
-Cap in place to reduce the difficulty jumps upwards
-Block target time is 60 seconds and retargets every 30 blocks
-Total of 7 Billion coins
-Block maturity 460 (+20 buffer, 480 total)
+```bash
+./build.sh --native --both          # Daemon + Qt wallet
+./build.sh --native --qt            # Qt wallet only
+./build.sh --native --daemon        # Daemon only
+```
 
-Ubuntu 12.04 dependancies that are used on the Linux build machine:
+**Docker cross-compile (from Linux)** — builds a single ~30MB static exe with no DLL dependencies.
 
-git-core build-essential libssl-dev libboost-all-dev libdb5.1-dev libdb5.1++-dev libgtk2.0-dev libminiupnpc-dev qt4-qmake mingw32 synaptic qt-sdk qt4-dev-tools libqt4-dev libqt4-core libqt4-gui libdb++-dev
+```bash
+./build.sh --windows --both --pull-docker     # Daemon + Qt (pull from Hub)
+./build.sh --windows --qt --pull-docker       # Qt wallet only
+./build.sh --windows --daemon --pull-docker   # Daemon only
+./build.sh --windows --both --build-docker     # Build MXE image locally first
+./build.sh --windows --qt --build-docker      # Qt only (build image locally)
+./build.sh --windows --daemon --build-docker  # Daemon only (build image locally)
+```
 
-License
+Uses `sidgrip/mxe-base:latest` Docker image with MXE cross-compiler. Everything (Qt, Boost, OpenSSL, etc.) is statically linked into one self-contained exe.
 
-Electron is released under the terms of the MIT license. See `COPYING` for more
-information or see http://opensource.org/licenses/MIT.
+> **Why the difference?**
+>
+> - MXE compiles all dependencies from source with the same toolchain, so everything links statically into one binary
+> - MSYS2's static Qt5 package uses a different C runtime (UCRT) than the MinGW64 toolchain (MSVCRT), making fully static linking impossible
+> - The native build auto-bundles all required DLLs in the output folder instead
 
-Photon is released under the terms of the MIT license. See `COPYING` for more
-information or see http://opensource.org/licenses/MIT.
+### macOS
 
+There are two ways to build for macOS:
 
-Blakecoin is released under the terms of the MIT license. See `COPYING` for more
-information or see http://opensource.org/licenses/MIT.
+**Native (Homebrew)** — builds directly on a Mac.
 
+Install dependencies:
 
+```bash
+brew install openssl boost@1.85 miniupnpc berkeley-db@4 qt@5
+```
 
+Then build:
+
+```bash
+./build.sh --native --both          # Daemon + Qt wallet
+./build.sh --native --qt            # Qt wallet only
+./build.sh --native --daemon        # Daemon only
+```
+
+**Docker cross-compile (from Linux)** — builds a macOS binary from a Linux host.
+
+```bash
+./build.sh --macos --both --pull-docker     # Daemon + Qt (pull from Hub)
+./build.sh --macos --qt --pull-docker       # Qt wallet only
+./build.sh --macos --daemon --pull-docker   # Daemon only
+./build.sh --macos --both --build-docker    # Build osxcross image locally first
+./build.sh --macos --qt --build-docker     # Qt only (build image locally)
+./build.sh --macos --daemon --build-docker # Daemon only (build image locally)
+```
+
+Uses `sidgrip/osxcross-base:latest` Docker image with osxcross cross-compiler.
+
+---
+
+## Output Structure
+
+```
+outputs/
+├── native/
+│   ├── daemon/         electrond
+│   └── qt/             electron-qt
+├── linux-appimage/
+│   └── qt/             Electron-x86_64.AppImage
+├── windows/
+│   ├── daemon/
+│   └── qt/             electron-qt.exe
+└── macos/
+    ├── daemon/         electrond
+    └── qt/             Electron-Qt.app
+```
+
+Each output directory includes a `build-info.txt` with OS version and build details.
+
+## Docker Images
+
+Use `--pull-docker` to pull prebuilt images from Docker Hub, or `--build-docker` to build locally from the Dockerfiles in `docker/`.
+
+| Image | Platform | Hub Size | Local Build Time |
+|-------|----------|----------|-----------------|
+| `sidgrip/daemon-base:18.04` | Linux native builds (daemon + Qt) | ~450 MB | ~10 min |
+| `sidgrip/appimage-base:22.04` | Linux AppImage | ~515 MB | ~15 min |
+| `sidgrip/mxe-base:latest` | Windows cross-compile | ~4.2 GB | ~2-4 hours |
+| `sidgrip/osxcross-base:latest` | macOS cross-compile | ~7.2 GB | ~1-2 hours |
+
+Local builds are cached by Docker — subsequent builds are instant.
+
+> **macOS `--build-docker` note:**
+>
+> - The macOS cross-compile Dockerfile requires an Apple SDK tarball that **cannot be redistributed**
+> - Place `MacOSX26.2.sdk.tar.xz` in `docker/sdk/` before running `--build-docker`
+> - Extract it from [Xcode](https://developer.apple.com/download/all/): `/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/`
+> - Using `--pull-docker` does **not** require the SDK — it is already included in the prebuilt Docker Hub image
+
+---
+
+## Multi-Coin Builder
+
+For building wallets for all Blake-family coins [Blakecoin](https://github.com/BlueDragon747/Blakecoin), [Photon](https://github.com/BlueDragon747/photon), [BlakeBitcoin](https://github.com/BlakeBitcoin/BlakeBitcoin), [Electron](https://github.com/BlueDragon747/Electron-ELT), [Universal Molecule](https://github.com/BlueDragon747/universalmol), [Lithium](https://github.com/BlueDragon747/lithium), see the [Blakestream Installer](https://github.com/SidGrip/Blakestream-Installer).
+
+## License
+
+Electron is released under the terms of the MIT license. See `COPYING` for more information.
