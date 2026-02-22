@@ -27,7 +27,7 @@ Electron is designed for faster transactions. The block reward steps down over t
 ## Quick Start (Ubuntu 18.04)
 
 ```bash
-git clone https://github.com/SidGrip/Electron-ELT.git
+git clone https://github.com/BlueDragon747/Electron-ELT.git
 cd Electron-ELT
 sudo add-apt-repository ppa:bitcoin/bitcoin
 sudo apt update
@@ -70,7 +70,7 @@ Other options:
 ## Platform Build Instructions
 
 ```bash
-git clone https://github.com/SidGrip/Electron-ELT.git
+git clone https://github.com/BlueDragon747/Electron-ELT.git
 cd Electron-ELT
 ```
 

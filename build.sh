@@ -25,7 +25,7 @@ COIN_NAME="electron"
 COIN_NAME_UPPER="Electron"
 DAEMON_NAME="electrond"
 QT_NAME="electron-qt"
-REPO_URL="https://github.com/SidGrip/Electron-ELT.git"
+REPO_URL="https://github.com/BlueDragon747/Electron-ELT.git"
 REPO_BRANCH="master"
 
 # Network ports and config
