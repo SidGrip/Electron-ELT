@@ -3,7 +3,7 @@
 **Date:** 2026-04-11
 **Original source:** `../Electron-ELT/` (0.8.9.8)
 **Update repo:** `./` (0.15.2 update)
-**Source of truth:** `Electron-ELT-0.15.2-update.md`
+**Source of truth:** `Electron-ELT-0.15.21.md`
 
 ---
 
@@ -63,7 +63,7 @@
 
 ## Source-of-Truth Claim Verification
 
-Each QC Status / Verified Snapshot / Policy claim from `Electron-ELT-0.15.2-update.md` checked against the actual 0.15.2 code.
+Each QC Status / Verified Snapshot / Policy claim from `Electron-ELT-0.15.21.md` checked against the actual 0.15.2 code.
 
 ### QC Status Bullets
 
@@ -209,7 +209,7 @@ Each QC Status / Verified Snapshot / Policy claim from `Electron-ELT-0.15.2-upda
 
 Ordered by priority; all items are non-blocking for the stated "no-send / no-mine mainnet" operational rule.
 
-1. **[LOW — doc only] Reconcile DNS seeds entry in source-of-truth.** `Electron-ELT-0.15.2-update.md` line ~133 says "None" but code (and the BlakeStream Seed Policy section in the same file) both require two shared ecosystem seeds. Update the Chain Parameters table to match.
+1. **[LOW — doc only] Reconcile DNS seeds entry in source-of-truth.** `Electron-ELT-0.15.21.md` line ~133 says "None" but code (and the BlakeStream Seed Policy section in the same file) both require two shared ecosystem seeds. Update the Chain Parameters table to match.
 
 2. **[LOW — cosmetic] Rebuild to produce Electron-named binaries.** Clean `src/*.o` and `src/blakecoind`, `src/blakecoin-cli` artifacts and rebuild so produced binaries are `electrond`/`electron-cli`. Does not affect consensus.
 

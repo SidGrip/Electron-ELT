@@ -2,9 +2,9 @@
 
 ## Overview
 
-Port Electron (ELT) from its current 0.8.9.8 codebase to Bitcoin Core 0.15.2, following the same approach used for the Blakecoin 0.15.2 update (`Blakecoin-0.15.2-update`).
+Port Electron (ELT) from its current 0.8.9.8 codebase to Bitcoin Core 0.15.2, following the same approach used for the Blakecoin 0.15.2 update (`Blakecoin-0.15.21`).
 
-**Reference codebase:** `../Blakecoin-0.15.2-update/` — the completed Blakecoin port to 0.15.2
+**Reference codebase:** `../Blakecoin-0.15.21/` — the completed Blakecoin port to 0.15.2
 **Original codebase:** `../Electron-ELT/` — current 0.8.9.8 source with all coin-specific parameters
 
 ---
@@ -147,7 +147,7 @@ Electron uses a **time-decay reward**, NOT standard halving:
 
 ### Phase 1: Copy & Rebrand the Blakecoin 0.15.2 Base
 
-1. **Copy** the entire `Blakecoin-0.15.2-update` codebase into this directory
+1. **Copy** the entire `Blakecoin-0.15.21` codebase into this directory
 2. **Rename** all Blakecoin references → Electron:
    - Binary names: `electrond`, `electron-qt`, `electron-cli`, `electron-tx`
    - Config file: `electron.conf`, config dir `~/.electron/`
@@ -274,7 +274,7 @@ Electron uses a **time-decay reward**, NOT standard halving:
 
 | What | Where |
 |------|-------|
-| Reference (completed) | `../Blakecoin-0.15.2-update/` |
+| Reference (completed) | `../Blakecoin-0.15.21/` |
 | Original coin source | `../Electron-ELT/` |
 | Original params | `../Electron-ELT/src/main.cpp` |
 | Original build script | `../Electron-ELT/build.sh` |
