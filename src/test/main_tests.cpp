@@ -15,12 +15,19 @@ BOOST_FIXTURE_TEST_SUITE(main_tests, TestingSetup)
 
 static void TestElectronSubsidySchedule(const Consensus::Params& consensusParams)
 {
+    const int act = consensusParams.nSubsidyLadderActivationHeight;
+    // Genesis is always the historical 5 ELT.
     BOOST_CHECK_EQUAL(GetBlockSubsidy(0, consensusParams), 5 * COIN);
-    BOOST_CHECK_EQUAL(GetBlockSubsidy(1, consensusParams), 20 * COIN);
-    BOOST_CHECK_EQUAL(GetBlockSubsidy(525600, consensusParams), 20 * COIN);
-    BOOST_CHECK_EQUAL(GetBlockSubsidy(525601, consensusParams), 10 * COIN);
-    BOOST_CHECK_EQUAL(GetBlockSubsidy(1051200, consensusParams), 10 * COIN);
-    BOOST_CHECK_EQUAL(GetBlockSubsidy(1051201, consensusParams), 5 * COIN);
+    // Pre-activation: 50 ELT flat (preserves the 0.15.21 chain history mined
+    // before the ladder fork).
+    BOOST_CHECK_EQUAL(GetBlockSubsidy(1, consensusParams), 50 * COIN);
+    BOOST_CHECK_EQUAL(GetBlockSubsidy(525600, consensusParams), 50 * COIN);
+    BOOST_CHECK_EQUAL(GetBlockSubsidy(1051200, consensusParams), 50 * COIN);
+    BOOST_CHECK_EQUAL(GetBlockSubsidy(act - 1, consensusParams), 50 * COIN);
+    // At/after activation: legacy 0.8 height-tier ladder. Activation lives
+    // past 1,051,200 on mainnet so the long-tail tier (5 ELT) applies.
+    BOOST_CHECK_EQUAL(GetBlockSubsidy(act, consensusParams), 5 * COIN);
+    BOOST_CHECK_EQUAL(GetBlockSubsidy(act + 1000, consensusParams), 5 * COIN);
 }
 
 BOOST_AUTO_TEST_CASE(block_subsidy_test)
@@ -32,9 +39,10 @@ BOOST_AUTO_TEST_CASE(block_subsidy_test)
 BOOST_AUTO_TEST_CASE(subsidy_limit_test)
 {
     const auto chainParams = CreateChainParams(CBaseChainParams::MAIN);
-    for (int nHeight : {0, 1, 525600, 525601, 1051200, 1051201, 5000000}) {
+    const int act = chainParams->GetConsensus().nSubsidyLadderActivationHeight;
+    for (int nHeight : {0, 1, 525600, 1051200, act - 1, act, act + 1000, 10000000}) {
         CAmount nSubsidy = GetBlockSubsidy(nHeight, chainParams->GetConsensus());
-        BOOST_CHECK(nSubsidy <= 20 * COIN);
+        BOOST_CHECK(nSubsidy <= 50 * COIN);
         BOOST_CHECK(MoneyRange(nSubsidy));
     }
 }
