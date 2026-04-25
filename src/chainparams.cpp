@@ -80,6 +80,12 @@ public:
         strNetworkID = "main";
         // Electron reward logic is height-tiered in validation.cpp.
         consensus.nSubsidyHalvingInterval = std::numeric_limits<int>::max();
+        // Forward-activate the legacy 0.8 ladder at this height. Below it the
+        // 0.15.21 chain pays 50 ELT flat (preserving recently-mined history);
+        // at and after it the legacy ladder applies (long-tail tier = 5 ELT).
+        // Set tip + 250 blocks (~4h at 60s spacing) past tip 6,175,679 to give
+        // miners and operators an upgrade window before the cliff.
+        consensus.nSubsidyLadderActivationHeight = 6175929;
         // Keep the legacy version checks disabled for historical blocks.
         consensus.BIP34Height = 100000000; // Disabled - far in future
         consensus.BIP34Hash = uint256();
