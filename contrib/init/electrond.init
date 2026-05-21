@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+#
+#  electrond The Electron Core server.
+#
+#
+# chkconfig: 345 80 20
+# description: electrond
+# processname: electrond
+#
+
+# Source function library.
+. /etc/init.d/functions
+
+# you can override defaults in /etc/sysconfig/electrond, see below
+if [ -f /etc/sysconfig/electrond ]; then
+        . /etc/sysconfig/electrond
+fi
+
+RETVAL=0
+
+prog=electrond
+# you can override the lockfile via ELECTROND_LOCKFILE in /etc/sysconfig/electrond
+lockfile=${ELECTROND_LOCKFILE-/var/lock/subsys/electrond}
+
+# electrond defaults to /usr/bin/electrond, override with ELECTROND_BIN
+electrond=${ELECTROND_BIN-/usr/bin/electrond}
+
+# electrond opts default to -disablewallet, override with ELECTROND_OPTS
+electrond_opts=${ELECTROND_OPTS--disablewallet}
+
+start() {
+    echo -n $"Starting $prog: "
+    daemon $DAEMONOPTS $electrond $electrond_opts
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch $lockfile
+    return $RETVAL
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    killproc $prog -t600
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && rm -f $lockfile
+    return $RETVAL
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status $prog
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    *)
+        echo "Usage: service $prog {start|stop|status|restart}"
+        exit 1
+        ;;
+esac

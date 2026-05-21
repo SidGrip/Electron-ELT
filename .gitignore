@@ -1,26 +1,102 @@
-src/*.exe
-src/electron-cli
-src/electron-tx
+*.tar.gz
+
+*.exe
+*.pdb
+src/electron
 src/electrond
-src/test_bitcoin
-src/qt/locale/*.ts
+src/electron-cli
+src/electron-gui
+src/electron-node
+src/electron-tx
+src/electron-util
+src/electron-chainstate
+src/electron-wallet
+src/test/fuzz/fuzz
+src/test/test_electron
+src/qt/test/test_electron-qt
+
+# autoreconf
+Makefile.in
+aclocal.m4
+autom4te.cache/
+build-aux/config.guess
+build-aux/config.sub
+build-aux/depcomp
+build-aux/install-sh
+build-aux/ltmain.sh
+build-aux/m4/libtool.m4
+build-aux/m4/lt~obsolete.m4
+build-aux/m4/ltoptions.m4
+build-aux/m4/ltsugar.m4
+build-aux/m4/ltversion.m4
+build-aux/missing
+build-aux/compile
+build-aux/test-driver
+config.cache
+config.log
+config.status
+configure
+libtool
+src/config/bitcoin-config.h
+src/config/bitcoin-config.h.in
+src/config/stamp-h1
+src/obj
+share/setup.nsi
+share/qt/Info.plist
+
+src/qt/*.moc
+src/qt/moc_*.cpp
+src/qt/forms/ui_*.h
+
+src/qt/test/moc*.cpp
+
+src/qt/electron-qt.config
+src/qt/electron-qt.creator
+src/qt/electron-qt.creator.user
+src/qt/electron-qt.files
+src/qt/electron-qt.includes
+
+.deps
+.dirstamp
+.libs
 .*.swp
-*.*~*
+*~
 *.bak
 *.rej
 *.orig
+*.pyc
 *.o
+*.o-*
+*.a
+*.pb.cc
+*.pb.h
+*.dat
+
+*.log
+*.trs
+*.dmg
+
+*.json.h
+*.raw.h
+
+# Only ignore unexpected patches
 *.patch
-.electron
-*.ts
-*.d.ts
-.ts
+!contrib/guix/patches/*.patch
+!depends/patches/**/*.patch
+
+#libtool object files
+*.lo
+*.la
 
 # Compilation and Qt preprocessor part
 *.qm
 Makefile
-electron-qt
+!depends/Makefile
+src/qt/electron-qt
 Electron-Qt.app
+
+# Qt Creator
+Makefile.am.user
 
 # Unit-tests
 Makefile.test
@@ -29,19 +105,48 @@ electron-qt_test
 # Resources cpp
 qrc_*.cpp
 
-# Qt creator
-*.pro.user
-
 # Mac specific
 .DS_Store
 build
+
+# Previous releases
+releases
+
+#lcov
+*.gcno
+*.gcda
+/*.info
+test_electron.coverage/
+total.coverage/
+fuzz.coverage/
+coverage_percent.txt
+/cov_tool_wrapper.sh
+qa-assets/
+
+#build tests
+linux-coverage-build
+linux-build
+win32-build
+test/config.ini
+test/cache/*
+test/.mypy_cache/
+
 !src/leveldb*/Makefile
-!depends/Makefile
-!depends/patches/**
 
-# Build outputs (created by build.sh)
-outputs/
-.cache/bdb/
+/doc/doxygen/
 
-# macOS SDK (Apple license — not redistributable)
-docker/sdk/*.sdk.tar.*
+libbitcoinconsensus.pc
+contrib/devtools/split-debug.sh
+
+# Output from running db4 installation
+db4/
+
+# clang-check
+*.plist
+
+osx_volname
+dist/
+
+/guix-build-*
+
+/ci/scratch/
