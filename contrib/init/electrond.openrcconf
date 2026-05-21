@@ -1,0 +1,33 @@
+# /etc/conf.d/electrond: config file for /etc/init.d/electrond
+
+# Config file location
+#ELECTROND_CONFIGFILE="/etc/electron/electron.conf"
+
+# What directory to write pidfile to?  (created and owned by $ELECTROND_USER)
+#ELECTROND_PIDDIR="/var/run/electrond"
+
+# What filename to give the pidfile
+#ELECTROND_PIDFILE="${ELECTROND_PIDDIR}/electrond.pid"
+
+# Where to write electrond data (be mindful that the blockchain is large)
+#ELECTROND_DATADIR="/var/lib/electrond"
+
+# User and group to own electrond process
+#ELECTROND_USER="electron"
+#ELECTROND_GROUP="electron"
+
+# Path to electrond executable
+#ELECTROND_BIN="/usr/bin/electrond"
+
+# Nice value to run electrond under
+#ELECTROND_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+#ELECTROND_OPTS=""
+
+# The timeout in seconds OpenRC will wait for electrond to terminate
+# after a SIGTERM has been raised.
+# Note that this will be mapped as argument to start-stop-daemon's
+# '--retry' option, which means you can specify a retry schedule
+# here. For more information see man 8 start-stop-daemon.
+ELECTROND_SIGTERM_TIMEOUT=600

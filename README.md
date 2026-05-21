@@ -1,59 +1,142 @@
 <p align="center">
-  <img src="src/qt/res/icons/bitcoin.png" alt="Electron-ELT" width="95">
+  <img src="src/qt/res/icons/bitcoin.png" alt="Electron" width="95">
 </p>
 
-# Electron-ELT 0.15.21
+# Electron Core 0.25.2
 
-> SegWit signaling schedule: Electron mainnet versionbits signaling starts on May 11, 2026 00:00:00 UTC (`1778457600`) and times out on May 11, 2027 00:00:00 UTC (`1809993600`). Activation still depends on BIP9 lock-in.
+Electron Core 0.25.2 is the Electron-ELT port of Core v25.2. It keeps
+Electron's chain identity, AuxPoW merged-mining rules, Blake-256 hash policy,
+and wallet formats while adding the Taproot-era Core codebase, descriptor-wallet
+support, SQLite wallet support, ZMQ, and Linux USDT tracepoints for hardened
+release builds.
 
-## About Electron-ELT
+## Mainnet Consensus Changes In 0.25.2
 
-Electron-ELT is a Blake-256 cryptocurrency in the BlakeStream family. This repository carries the Electron-ELT Core `0.15.21` update and ships build/release packaging for native Ubuntu `20.04`, `22.04`, `24.04`, `25.10`, Windows, native macOS, and Ubuntu `22.04+` AppImage.
+Electron 0.25.2 follows the 0.15.21 SegWit activation and then activates the
+next Core-compatible script rule sets in a staged order. Miners and pools
+should use the daemon-provided block template version; do not manually rewrite
+version bits or AuxPoW chain-id bits.
 
-- Uses the **Blake-256** hashing algorithm
-- Based on **Bitcoin Core 0.15.2**
-- Uses the autotools build system (`./configure` + `make`)
-- Ships release packages for Ubuntu 20.04, 22.04, 24.04, 25.10, Windows, macOS, and Ubuntu 22+ AppImage
-
-| Network Info | |
+| Rule set | Mainnet policy in Electron 0.25.2 |
 |---|---|
-| Algorithm | Blake-256 (8 rounds) |
-| Block time | 60 seconds (1 minute) |
-| Block reward | 20 ELT, then 10 ELT after 525,600 and 5 ELT after 1,051,200 |
-| Difficulty retarget | Every 30 blocks (30 minutes) |
-| Default port | 6853 |
-| RPC port | 6852 |
-| Max supply | 7,000,000,000 ELT |
+| SegWit (`BIP141` / `BIP143` / `BIP147`) | Already active from 0.15.21; buried at height `6197280`. No new SegWit signaling window in 0.25.2. |
+| Subsidy ladder restore | Mainnet preserves the 0.15.21 flat `50 ELT` history before height `6175929`; from height `6175929`, 0.25.2 restores Electron's absolute-height legacy 0.8 ladder. Because `6175929` is already above the `1051200` ladder tier, the restored mainnet payout is `5 ELT` from activation onward. |
+| `BIP34` coinbase height | Height activation at `6260635`; `BIP34Hash = uint256{}`. |
+| `BIP65` / CLTV | Height activation at `6260635`; required for standard CLTV atomic-swap refunds. |
+| `BIP66` / strict DER | Height activation at `6260635`. |
+| Taproot (`BIP340` / `BIP341` / `BIP342`) | BIP9 deployment bit `2`, start `1782871200` (`2026-07-01 02:00:00 UTC`), timeout `1814407200` (`2027-07-01 02:00:00 UTC`), minimum activation height `6270715`. |
 
----
+Only Taproot is a future BIP9-signaled deployment in 0.25.2. `BIP34`,
+`BIP65`, `BIP66`, and buried SegWit are height rules. AuxPoW pools should use
+`createauxblock` / `getauxblock` from Electron Core; the daemon computes the
+correct top bits, Electron chain-id bits, and Taproot bit `2` during BIP9
+`started` and `locked_in` states.
+
+## About Electron
+
+Electron is a Blake-256 AuxPoW coin in the BlakeStream family. It is merge-mined
+with BlakeStream-family infrastructure and keeps its own network, address,
+subsidy, and maturity rules.
+
+- Uses the Blake-256 hashing algorithm, 8 rounds
+- Based on the v25.2 Core codebase
+- Uses the autotools build system (`./autogen.sh`, `./configure`, `make`)
+- Supports legacy Berkeley DB wallets and descriptor SQLite wallets
+- Keeps Electron txids on single SHA-256
+- Uses HASH256/double SHA-256 for witness-v0 BIP143 signing
+- Keeps BIP340/BIP341/BIP342 Taproot tagged hashes byte-compatible with the upstream BIP definitions
+
+| Network Info | Value |
+|---|---|
+| Algorithm | Blake-256, 8 rounds |
+| Block time | 1 minute |
+| Difficulty retarget | Every 30 blocks |
+| PoW limit | `0x000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff` |
+| Coinbase maturity | 460 blocks |
+| AuxPoW chain ID | `0x0007` |
+| AuxPoW start height | `500000` mainnet, `0` testnet/regtest |
+| Default P2P port | 6853 |
+| RPC port | 6852 |
+| Regtest RPC port | 18332 |
+| Mainnet genesis | `00000063044a9b6cad9015b289de8a86a654d5a916fcaaeeefb5b9408448df40` |
+| Mainnet Bech32 HRP | `elt` |
+| Testnet Bech32 HRP | `telt` |
+| Regtest Bech32 HRP | `relt` |
+
+## Network Activation Notes
+
+The SegWit activation block is height `6197280`. The STARTED period
+`6197220-6197249` signaled SegWit bit `1` on `30/30` blocks, exceeding the
+Electron `27/30` threshold. Post-active blocks no longer need to continue
+setting SegWit bit `1`.
+
+Regtest keeps Taproot always active by default for developer tests, and can use
+`-vbparams=taproot:...` when a test needs to force a live BIP9 signaling window.
+AuxPoW template tests should verify `createauxblock` / `getauxblock`, not only
+standard `getblocktemplate`.
 
 ## Quick Start
 
 ```bash
 git clone https://github.com/SidGrip/Electron-ELT.git
 cd Electron-ELT
-bash ./build.sh --help
+git checkout electron-25.2-auxpow-port
+./build.sh --help
 ```
 
-For most users, downloading a prebuilt release from GitHub Releases is the simplest path.
-Use build.sh to build the release artifacts locally.
+For most users, downloading a tested release artifact from GitHub Releases is
+the simplest path. Use `build.sh` to build release artifacts locally.
 
----
+## Upgrade Notes
+
+Before starting Electron Core 0.25.2 on an existing data directory, close the
+older wallet cleanly and back up any wallet files first.
+
+When syncing 0.25.2 from old 0.8/0.15.21-era chains, header presync can look slow or restart because v25 verifies low-work header chains before storing them. For trusted bootstrap only, use `-minimumchainwork=0 -connect=<trusted-node>` and remove those options after the node catches up.
+
+`peers.dat` is only the cached P2P address database. It is safe to remove or
+rename when moving between major releases, and Electron will rebuild it on the
+next start. If startup fails with `Invalid or corrupt peers.dat`, remove or
+rename this file:
+
+- Windows: `%APPDATA%\Electron\peers.dat`
+- Linux: `~/.electron/peers.dat`
+- macOS: `~/Library/Application Support/Electron/peers.dat`
+
+If the block index or chainstate database cannot be reused after an upgrade,
+restart once with `-reindex` to rebuild the local block database from the stored
+block files:
+
+```bash
+electrond -reindex
+```
+
+Pruning is disabled by default (`-prune=0`), so a normal Electron Core node
+keeps full block data. Public release nodes, explorers, pools, and bridge/watch
+services should run unpruned unless they have a specific reason to discard old
+block data.
+
+For first-run testing of a new 0.25.2 build, use an isolated data directory so
+the test does not touch an existing 0.15.21 wallet or chainstate:
+
+```bash
+electron-qt -datadir=/path/to/electron-25.2-test
+```
 
 ## Build Options
 
 ```bash
-bash ./build.sh [PLATFORM] [TARGET] [OPTIONS]
+./build.sh [PLATFORM] [TARGET] [OPTIONS]
 
 Platforms:
-  --native          Build natively on this machine (Linux or macOS)
+  --native          Build natively on this machine (Linux, macOS, or Windows)
   --appimage        Build portable Linux AppImage (requires Docker)
   --windows         Cross-compile for Windows from Linux (requires Docker)
   --macos           Cross-compile for macOS from Linux (requires Docker)
 
 Targets:
-  --daemon          Build daemon only
-  --qt              Build Qt wallet only
+  --daemon          Build daemon only (electrond + electron-cli + electron-tx)
+  --qt              Build Qt wallet only (electron-qt)
   --both            Build daemon and Qt wallet (default)
 
 Docker options:
@@ -62,135 +145,151 @@ Docker options:
   --no-docker       For --native on Linux: build directly on the host
 
 Other options:
+  --hardened-release
+                   Native Linux release profile: enable SQLite, ZMQ, and USDT
+                   and fail the build if configure disables any of them
   --jobs N          Parallel make jobs
 ```
-
----
 
 ## Platform Build Instructions
 
 ### Native Linux
 
-```bash
-bash ./build.sh --native --both
-```
-
-- On supported Ubuntu hosts, `build.sh` auto-detects the OS version and installs missing packages automatically
-- Native Linux release packaging targets Ubuntu `20.04`, `22.04`, `24.04`, and `25.10`
-- Native Linux builds write directly to `outputs/`
-- `--both` refreshes the full Ubuntu-native wallet files directly in `outputs/`
-- `--daemon` refreshes the daemon-side Linux files directly in `outputs/`
-- `--qt` refreshes the Qt wallet files directly in `outputs/`
-- Native Ubuntu outputs are bare same-Ubuntu binaries that rely on host-installed native packages
-- Native Ubuntu builds bootstrap Berkeley DB `4.8.30.NC` into a local repo cache and always link wallet builds against that copy
-- Each Ubuntu output folder gets its own `install-deps.sh` and `README.md` for the non-BDB host runtime packages
-
-### Linux (Docker)
-
-Use `--pull-docker` to pull prebuilt images from Docker Hub, or `--build-docker` to build them locally from the Dockerfiles in `docker/`.
+Direct host build:
 
 ```bash
-bash ./build.sh --native --both --pull-docker
-bash ./build.sh --native --qt --pull-docker
-bash ./build.sh --native --daemon --pull-docker
-bash ./build.sh --native --both --build-docker
+./build.sh --native --both --no-docker
 ```
+
+Docker build using the configured native image:
+
+```bash
+./build.sh --native --both --pull-docker
+```
+
+Recommended hardened Ubuntu 26 release build:
+
+```bash
+DOCKER_NATIVE=sidgrip/native-base:26.04 \
+  ./build.sh --native --both --build-docker --hardened-release --jobs 5
+```
+
+Native Linux build outputs are bare Ubuntu-native binaries in
+`outputs/Ubuntu-XX/`, where `XX` comes from the host or Docker image release.
+The builder supports Ubuntu `20.04`, `22.04`, `24.04`, and `26.04`; current
+release lanes use Ubuntu `22.04`, `24.04`, and `26.04`.
+
+Each Ubuntu output folder includes `install-deps.sh`, `README.md`,
+`build-info.txt`, `config.log`, `test-config.ini`, `electron.conf`, the daemon
+tools, and the Qt wallet artifacts when `--qt` or `--both` is used. Berkeley DB
+`4.8.30.NC` is bootstrapped into the repo cache by the builder rather than
+installed from apt.
+
+The hardened Linux release profile requires:
+
+- `USE_BDB=true`
+- `USE_SQLITE=true`
+- `ENABLE_ZMQ=true`
+- `ENABLE_USDT_TRACEPOINTS=true`
 
 ### AppImage
 
 ```bash
-bash ./build.sh --appimage --pull-docker
+./build.sh --appimage --pull-docker
 ```
 
-- Uses `sidgrip/appimage-base:22.04`
-- Produces a self-contained AppImage in `outputs/AppImage/`
-- The output folder keeps `Electron-0.15.21-x86_64.AppImage`, `README.md`, and `build-info.txt`
-- Intended for Ubuntu `22.04+`
-- Direct launch on Ubuntu `22.04.5` needs `sudo apt install libfuse2`
-- Direct launch on Ubuntu `24.04.4` and `25.10` needs `sudo apt install libfuse2t64`
-- If the host is missing that package, AppImage runtime startup fails with `dlopen(): error loading libfuse.so.2`
-- Fallback launch remains `--appimage-extract-and-run`
+The AppImage build uses `sidgrip/appimage-base:22.04` and writes
+`Electron-0.25.2-x86_64.AppImage`, `README.md`, and `build-info.txt` to
+`outputs/AppImage/`. It is intended for Ubuntu `22.04+`. Direct launch requires
+`libfuse2` on Ubuntu `22.04` and `libfuse2t64` on newer Ubuntu releases; the
+fallback launch path is `--appimage-extract-and-run`.
 
 ### Windows
 
 ```bash
-bash ./build.sh --windows --both --pull-docker
+./build.sh --windows --both --pull-docker
 ```
 
-- Runs on Linux with Docker using `sidgrip/mxe-base:latest`
-- Writes loose cross-built outputs to `outputs/Windows/`
+Windows release artifacts come from the MXE cross-compile container. Native
+Windows builds are diagnostic only and are not the release lane.
 
 ### macOS
 
-There are two macOS paths in this repo:
-
-#### Cross-build from Linux
+Native macOS build:
 
 ```bash
-bash ./build.sh --macos --both --pull-docker
+./build.sh --native --both --no-docker
 ```
 
-- Runs on Linux with Docker using `sidgrip/osxcross-base:sdk-26.2`
-- Produces artifacts in `outputs/Macosx/`
-
-#### Native build on macOS
+Cross-build from Linux:
 
 ```bash
-bash ./build.sh --native --both
+./build.sh --macos --both --pull-docker
 ```
 
-- Uses Homebrew on the Mac host
-- `build.sh` installs missing Homebrew dependencies automatically
-- Native macOS builds write to `outputs/Macosx/`
-
----
+The default Linux-to-macOS cross-build uses the `sidgrip/osxcross-base:sdk-26.2`
+container with the depends system and `CONFIG_SITE`. Native macOS builds use
+Homebrew dependencies and write to `outputs/Macosx/`. USDT/eBPF tracing is
+Linux-only and is not a macOS release requirement.
 
 ## Output Structure
 
 ```text
 outputs/
 ├── AppImage/
-│   ├── Electron-0.15.21-x86_64.AppImage
+│   ├── Electron-0.25.2-x86_64.AppImage
 │   ├── README.md
 │   └── build-info.txt
 ├── Macosx/
 │   ├── Electron-Qt.app
-│   ├── electron-cli-0.15.21
-│   ├── electron-qt-0.15.21
-│   ├── electron-tx-0.15.21
-│   ├── electrond-0.15.21
-│   └── build-info.txt
-├── Ubuntu-20/
+│   ├── electron-cli-0.25.2
+│   ├── electron-qt-0.25.2
+│   ├── electron-tx-0.25.2
+│   ├── electron-wallet-0.25.2
+│   ├── electron-util-0.25.2
+│   ├── electrond-0.25.2
+│   ├── electron.conf
+│   ├── build-info.txt
+│   ├── config.log
+│   └── test-config.ini
+├── Ubuntu-XX/
 │   ├── README.md
-│   ├── electron-256.png
-│   ├── electron-cli
+│   ├── install-deps.sh
 │   ├── electron.conf
 │   ├── electron.desktop
+│   ├── electron-256.png
+│   ├── electron-cli
 │   ├── electron-qt
-│   ├── electron-qt-bin
 │   ├── electron-tx
+│   ├── electron-wallet
+│   ├── electron-util
 │   ├── electrond
-│   └── install-deps.sh
-├── Ubuntu-22/
-├── Ubuntu-24/
-├── Ubuntu-25/
-└── Windows/
-    ├── electron-cli-0.15.21.exe
-    ├── electron-qt-0.15.21.exe
-    ├── electron-tx-0.15.21.exe
-    ├── electrond-0.15.21.exe
-    └── build-info.txt
+│   ├── build-info.txt
+│   ├── config.log
+│   └── test-config.ini
+├── Windows/
+│   ├── electron-cli-0.25.2.exe
+│   ├── electron-qt-0.25.2.exe
+│   ├── electron-tx-0.25.2.exe
+│   ├── electron-wallet-0.25.2.exe
+│   ├── electron-util-0.25.2.exe
+│   ├── electrond-0.25.2.exe
+│   └── build-info.txt
+└── release/
+    ├── Electron-0.25.2-x86_64.AppImage
+    ├── Electron-0.25.2-Ubuntu-22-x86_64.tar.gz
+    ├── Electron-0.25.2-Ubuntu-24-x86_64.tar.gz
+    ├── Electron-0.25.2-Ubuntu-26-x86_64.tar.gz
+    ├── Electron-0.25.2-macOS-x86_64.tar.gz
+    ├── Electron-0.25.2-Windows-x86_64.zip
+    └── SHA256SUMS
 ```
 
-For Ubuntu native builds, the current host's final wallet files land in `outputs/Ubuntu-20/`, `outputs/Ubuntu-22/`, `outputs/Ubuntu-24/`, or `outputs/Ubuntu-25/` depending on the detected Ubuntu release. These are bare Ubuntu-native binaries, so each Ubuntu folder gets its own `install-deps.sh`, `README.md`, and `electron.conf`. Berkeley DB `4.8.30.NC` is bootstrapped into a local repo cache by the builder rather than being installed from apt.
-
-For Windows cross-builds from Linux, the output bundle lands in `outputs/Windows/` and contains the four `.exe` binaries plus `build-info.txt`.
-
-For native macOS builds, the current host's daemon tools, `Electron-Qt.app`, and the raw `electron-qt-0.15.21` binary all land in `outputs/Macosx/`.
-
-For AppImage builds, `outputs/AppImage/` keeps `Electron-0.15.21-x86_64.AppImage`, `README.md`, and `build-info.txt`.
-
----
+`Ubuntu-XX` is the detected host or Docker image release, such as `Ubuntu-20`,
+`Ubuntu-22`, `Ubuntu-24`, or `Ubuntu-26`. Current release packaging produces
+`Ubuntu-22`, `Ubuntu-24`, and `Ubuntu-26` archives. The `outputs/release/`
+folder is created by release packaging flows and may be absent after a single
+platform build.
 
 ## Docker Images
 
@@ -200,18 +299,20 @@ When using `--pull-docker`, the build script uses these prebuilt images:
 |---|---|
 | `sidgrip/native-base:20.04` | Native Linux Ubuntu 20.04 build |
 | `sidgrip/native-base:22.04` | Native Linux Ubuntu 22.04 build |
-| `sidgrip/native-base:24.04` | Native Linux Ubuntu 24.04 build |
-| `sidgrip/native-base:25.10` | Native Linux Ubuntu 25.10 build |
+| `sidgrip/native-base:24.04` | Native Linux Ubuntu 24.04 build, default native Docker image |
+| `sidgrip/native-base:26.04` | Native Linux Ubuntu 26.04 build, hardened release lane |
 | `sidgrip/appimage-base:22.04` | Ubuntu 22+ AppImage build |
 | `sidgrip/mxe-base:latest` | Windows cross-compile |
 | `sidgrip/osxcross-base:sdk-26.2` | macOS cross-compile |
 
----
-
 ## Multi-Coin Builder
 
-For building wallets for all Blake-family coins [Blakecoin](https://github.com/SidGrip/Blakecoin), [Photon](https://github.com/SidGrip/photon), [BlakeBitcoin](https://github.com/SidGrip/BlakeBitcoin), [Electron-ELT](https://github.com/SidGrip/Electron-ELT), [UniversalMolecule](https://github.com/SidGrip/universalmol), and [Lithium](https://github.com/SidGrip/lithium), see the [Blakestream Installer](https://github.com/SidGrip/Blakestream-Installer).
+For coordinated BlakeStream family wallet builds, release staging, and
+installer workflows, see the Blakestream Installer repository:
+https://github.com/SidGrip/Blakestream-Installer.
 
 ## License
 
-Electron-ELT is released under the terms of the MIT license. See `COPYING` for more information.
+Electron Core is released under the terms of the MIT license. See
+[COPYING](COPYING) for more information or see
+https://opensource.org/licenses/MIT.
