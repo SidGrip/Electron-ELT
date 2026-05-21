@@ -1923,8 +1923,7 @@ DisconnectResult Chainstate::DisconnectBlock(const CBlock& block, const CBlockIn
     // Note: the blocks specified here are different than the ones used in ConnectBlock because DisconnectBlock
     // unwinds the blocks in reverse. As a result, the inconsistency is not discovered until the earlier
     // blocks with the duplicate coinbase transactions are disconnected.
-    bool fEnforceBIP30 = !((pindex->nHeight==91722 && pindex->GetBlockHash() == uint256S("0x00000000000271a2dc26e7667f8419f2e15416dc6955e5a6c6cdf3f2574dd08e")) ||
-                           (pindex->nHeight==91812 && pindex->GetBlockHash() == uint256S("0x00000000000af0aed4792b1acee3d966af36cf5def14935db8de83d6f9306f2f")));
+    bool fEnforceBIP30 = !IsBIP30Unspendable(*pindex);
 
     // undo transactions in reverse order
     for (int i = block.vtx.size() - 1; i >= 0; i--) {
@@ -5708,14 +5707,18 @@ Chainstate& ChainstateManager::ActivateExistingSnapshot(CTxMemPool* mempool, uin
 
 bool IsBIP30Repeat(const CBlockIndex& block_index)
 {
-    return (block_index.nHeight==91842 && block_index.GetBlockHash() == uint256S("0x00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec")) ||
-           (block_index.nHeight==91880 && block_index.GetBlockHash() == uint256S("0x00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721"));
+    // Electron mainnet duplicate-coinbase history. This is the later block
+    // that repeats a prior coinbase txid; ConnectBlock exempts only this exact
+    // height/hash pair from the BIP30 overwrite check.
+    return block_index.nHeight == 407924 && block_index.GetBlockHash() == uint256S("0x5afb0c5d144d3d6e1ba7a2566f733a7867fb8fe460f21cc799589cc32bb748e1");
 }
 
 bool IsBIP30Unspendable(const CBlockIndex& block_index)
 {
-    return (block_index.nHeight==91722 && block_index.GetBlockHash() == uint256S("0x00000000000271a2dc26e7667f8419f2e15416dc6955e5a6c6cdf3f2574dd08e")) ||
-           (block_index.nHeight==91812 && block_index.GetBlockHash() == uint256S("0x00000000000af0aed4792b1acee3d966af36cf5def14935db8de83d6f9306f2f"));
+    // Earlier block whose coinbase output becomes unspendable because a later
+    // block repeats the coinbase txid. DisconnectBlock and UTXO statistics use
+    // this reverse side of the same historical duplicate pair.
+    return block_index.nHeight == 407919 && block_index.GetBlockHash() == uint256S("0xc6f6dc62cc336a55d31b5c623985a5c0ec271199c900894cdd29b98bef19f202");
 }
 
 void Chainstate::InvalidateCoinsDBOnDisk()
