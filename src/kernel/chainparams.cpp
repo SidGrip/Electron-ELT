@@ -107,7 +107,10 @@ public:
         // Electron SegWit is inherited from the 0.15.21 mainnet activation.
         // 0.25.2 buries this height and does not re-signal SegWit.
         consensus.SegwitHeight = 6197280;
-        consensus.MinBIP9WarningHeight = 0;
+        // Ignore historical versionbit signaling before the buried SegWit
+        // activation height. Unknown-versionbit warnings remain enabled after
+        // this point.
+        consensus.MinBIP9WarningHeight = 6197280;
         // Electron-ELT-0.15.21 uses the wider 0x000000ff...ff target mask,
         // even though genesis nBits is compact 0x1e00ffff. Preserve the
         // released 15.21 value for historical replay; do not "simplify" this to
@@ -136,8 +139,8 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TAPROOT].nTimeout = 1814407200;
         consensus.vDeployments[Consensus::DEPLOYMENT_TAPROOT].min_activation_height = 6270715;
 
-        consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000004368d3371df746fb73");
-        consensus.defaultAssumeValid = uint256S("0xaa3a1fb1f5551c04c74a97dd8ab8d178a79d656d092fb8a84fd7080dddf1e4ba");
+        consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000437b1fd9290acad76c");
+        consensus.defaultAssumeValid = uint256S("0xde331187f13136a7c46f4bb813ec53ea1eaf1808415605e83356f2aefd3cd704");
 
         // Electron AuxPoW chain identity (consumed by Phase 2 AuxPoW core).
         // Mainnet uses strict chain-ID and the historical AuxPoW start height.
@@ -205,6 +208,9 @@ public:
                 {4014588, uint256S("0x66e1610c8ae6bcf0b50c48d01d32eabb3680ec3d8f387506baf1c19ae62706f1")},
                 {6169882, uint256S("0xaa3a1fb1f5551c04c74a97dd8ab8d178a79d656d092fb8a84fd7080dddf1e4ba")},
                 {6197280, uint256S("0x6f4cd4fca3dfbb13a0478ce807f7378e3a08479a8fa4c8ae52e609528a35699c")},
+                {6200000, uint256S("0x4deba017724d476554ae7df90fc8b87583c39737d828dc6584f88f209502da97")},
+                {6210000, uint256S("0xd892525a25d0c535d607f8e1aba3fdd7b4cd770dd45b0b82a64b6dad3550de1f")},
+                {6215000, uint256S("0xde331187f13136a7c46f4bb813ec53ea1eaf1808415605e83356f2aefd3cd704")},
             }
         };
 
@@ -213,9 +219,9 @@ public:
         };
 
         chainTxData = ChainTxData{
-            .nTime    = 1776797276,
-            .nTxCount = 6969581,
-            .dTxRate  = 0.01675930127041742,
+            .nTime    = 1779534945,
+            .nTxCount = 7015326,
+            .dTxRate  = 0.01681703326962325,
         };
     }
 };
