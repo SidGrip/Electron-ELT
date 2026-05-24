@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/qt/res/icons/bitcoin.png" alt="Electron" width="95">
+  <img src="src/qt/res/icons/electron.png" alt="Electron" width="95">
 </p>
 
 # Electron Core 0.25.2
