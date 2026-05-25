@@ -5,8 +5,10 @@
 """Test BIP68 implementation."""
 
 import time
+import random
 
 from test_framework.blocktools import (
+    COINBASE_MATURITY,
     NORMAL_GBT_REQUEST_PARAMS,
     add_witness_commitment,
     create_block,
@@ -50,18 +52,22 @@ class BIP68Test(BitcoinTestFramework):
 
     def set_test_params(self):
         self.num_nodes = 2
+        self.csv_activation_height = COINBASE_MATURITY + 432
         self.extra_args = [
             [
-                '-testactivationheight=csv@432',
+                f'-testactivationheight=csv@{self.csv_activation_height}',
             ],
             [
-                '-testactivationheight=csv@432',
+                f'-testactivationheight=csv@{self.csv_activation_height}',
             ],
         ]
 
     def run_test(self):
         self.relayfee = self.nodes[0].getnetworkinfo()["relayfee"]
         self.wallet = MiniWallet(self.nodes[0])
+        self.log.info(f"Mining {COINBASE_MATURITY + 1} blocks so Electron coinbase outputs can mature before CSV activation")
+        self.generate(self.wallet, COINBASE_MATURITY + 1, sync_fun=self.no_op)
+        self.sync_blocks()
 
         self.log.info("Running test disable flag")
         self.test_disable_flag()
@@ -135,7 +141,6 @@ class BIP68Test(BitcoinTestFramework):
         # transactions.
         max_outputs = 50
         while len(self.wallet.get_utxos(include_immature_coinbase=False, mark_as_spent=False)) < 200:
-            import random
             num_outputs = random.randint(1, max_outputs)
             self.wallet.send_self_transfer_multi(from_node=self.nodes[0], num_outputs=num_outputs)
             self.generate(self.wallet, 1)
@@ -394,9 +399,9 @@ class BIP68Test(BitcoinTestFramework):
         assert_equal(self.nodes[0].getbestblockhash(), block.hash)
 
     def activateCSV(self):
-        # activation should happen at block height 432 (3 periods)
-        # getblockchaininfo will show CSV as active at block 431 (144 * 3 -1) since it's returning whether CSV is active for the next block.
-        min_activation_height = 432
+        # Keep activation after Electron's 460-block coinbase maturity so this
+        # test can exercise mature wallet spends before CSV consensus activates.
+        min_activation_height = self.csv_activation_height
         height = self.nodes[0].getblockcount()
         assert_greater_than(min_activation_height - height, 2)
         self.generate(self.wallet, min_activation_height - height - 2, sync_fun=self.no_op)

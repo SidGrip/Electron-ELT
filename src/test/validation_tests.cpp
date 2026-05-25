@@ -143,13 +143,22 @@ BOOST_AUTO_TEST_CASE(test_assumeutxo)
     BOOST_REQUIRE(snapshot_110);
     BOOST_CHECK_EQUAL(
         snapshot_110->hash_serialized.ToString(),
-        "09d3598d6409eb21800ec1f2fa6b8666442590fc54e04750a732598754d8cd42");
+        "0aabeb618fd444e4209e29dd4607a8e4ba62aa3deb6da1ece8ded341614f0624");
     BOOST_CHECK_EQUAL(snapshot_110->nChainTx, 111U);
 
     for (const int empty : {0, 100, 111, 115, 200, 209, 211}) {
         const auto out = ExpectedAssumeutxo(empty, *params);
         BOOST_CHECK(!out);
     }
+
+    const auto main_params = CreateChainParams(*m_node.args, CBaseChainParams::MAIN);
+    BOOST_CHECK_EQUAL(main_params->Assumeutxo().size(), 1U);
+    const auto main_snapshot = ExpectedAssumeutxo(6216856, *main_params);
+    BOOST_REQUIRE(main_snapshot);
+    BOOST_CHECK_EQUAL(
+        main_snapshot->hash_serialized.ToString(),
+        "2b2a031289f3f75de9542e4527cb8f8be6b578fca294df206523a589bfc4575e");
+    BOOST_CHECK_EQUAL(main_snapshot->nChainTx, 7017207U);
 }
 
 BOOST_AUTO_TEST_CASE(block_malleation)
