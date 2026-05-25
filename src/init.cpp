@@ -1448,6 +1448,13 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
         .chainparams = chainparams,
         .datadir = args.GetDataDirNet(),
         .adjusted_time_callback = GetAdjustedTime,
+        .snapshot_validation_complete_callback = [&node] {
+            if (node.connman && node.chainman && !node.chainman->m_blockman.IsPruneMode()) {
+                node.connman->RemoveLocalServices(NODE_NETWORK_LIMITED);
+                node.connman->AddLocalServices(NODE_NETWORK);
+                LogPrintf("[snapshot] restored full NODE_NETWORK local service after background validation completed\n");
+            }
+        },
     };
     Assert(!ApplyArgsManOptions(args, chainman_opts)); // no error can happen, already checked in AppInitParameterInteraction
 
