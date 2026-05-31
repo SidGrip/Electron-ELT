@@ -83,6 +83,13 @@ BOOST_AUTO_TEST_CASE(GetFeeTest)
     // some more integer checks
     BOOST_CHECK(CFeeRate(CAmount(26), 789) == CFeeRate(32));
     BOOST_CHECK(CFeeRate(CAmount(27), 789) == CFeeRate(34));
+    BOOST_CHECK(CFeeRate(CAmount(-26), 789) == CFeeRate(-32));
+    BOOST_CHECK(CFeeRate(CAmount(-27), 789) == CFeeRate(-34));
+    // Saturate before scaling would overflow CAmount.
+    BOOST_CHECK(CFeeRate(std::numeric_limits<CAmount>::max(), 1) == CFeeRate(std::numeric_limits<CAmount>::max()));
+    BOOST_CHECK(CFeeRate(std::numeric_limits<CAmount>::min(), 1) == CFeeRate(std::numeric_limits<CAmount>::min()));
+    BOOST_CHECK(CFeeRate(std::numeric_limits<CAmount>::max(), 1000) == CFeeRate(std::numeric_limits<CAmount>::max()));
+    BOOST_CHECK(CFeeRate(std::numeric_limits<CAmount>::min(), 1000) == CFeeRate(std::numeric_limits<CAmount>::min()));
     // Maximum size in bytes, should not crash
     CFeeRate(MAX_MONEY, std::numeric_limits<uint32_t>::max()).GetFeePerK();
 }
